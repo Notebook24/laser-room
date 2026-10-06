@@ -66,7 +66,7 @@ public class PlayerHealth : MonoBehaviour
         player.Respawn();
         maxHealth = baseMaxHealth;
         CurrentHealth = maxHealth;
-        ShowMessage("You died! Back to the start.", 3f);
+        ShowMessage("You died! Step on the switch to try again.", 3f);
     }
 
     void OnGUI()
