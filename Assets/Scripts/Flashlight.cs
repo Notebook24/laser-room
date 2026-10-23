@@ -10,6 +10,13 @@ public class Flashlight : MonoBehaviour
     // =====================================================================
     //  EDIT THESE NUMBERS (constants, always win over the Inspector)
     // =====================================================================
+    
+    const float FOG_END_OFF = 16f;         // you can see this far with the light OFF
+    const float FOG_END_ON = 26f;          // you can see this far with the light ON
+    const float FOG_START = 3f;            // fog begins right at the camera
+    const float FOG_BLEND_SPEED = 4f;      // how quickly the view distance changes
+    const float DARK_AMBIENT = 0.25f;      // ambient light (0 = pitch black)
+    const float DARK_SUN = 0.2f;           // directional light intensity (the "moon")
     const float RANGE = 20f;              // how far the beam reaches (meters)
     const float SPOT_ANGLE = 60f;         // full cone angle (degrees)
     const float INTENSITY = 160f;         // brightness of the visible light (URP spot lights need big numbers)
@@ -26,6 +33,7 @@ public class Flashlight : MonoBehaviour
     Transform cam;
     float battery;
     bool exhausted;
+    float fogEnd = FOG_END_OFF;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() { Instance = null; }
@@ -53,6 +61,27 @@ public class Flashlight : MonoBehaviour
         beam.color = new Color(1f, 0.96f, 0.85f);
         beam.shadows = LightShadows.Soft;
         beam.enabled = false;
+
+        // Make the world dark
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientLight = Color.white * DARK_AMBIENT;
+        RenderSettings.ambientIntensity = DARK_AMBIENT;
+        RenderSettings.reflectionIntensity = 0f;
+
+        foreach (Light l in FindObjectsByType<Light>(FindObjectsSortMode.None))
+            if (l.type == LightType.Directional) l.intensity = DARK_SUN;
+
+        // Fog hides everything past your sight distance
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Linear;
+        RenderSettings.fogColor = Color.black;
+        RenderSettings.fogStartDistance = FOG_START;
+        RenderSettings.fogEndDistance = fogEnd;
+
+        // Black background instead of the skybox (fog doesn't affect skyboxes)
+        Camera camComp = cam.GetComponent<Camera>();
+        camComp.clearFlags = CameraClearFlags.SolidColor;
+        camComp.backgroundColor = Color.black;
     }
 
     void Update()
@@ -81,6 +110,10 @@ public class Flashlight : MonoBehaviour
             battery = Mathf.Min(BATTERY_SECONDS, battery + Time.deltaTime * RECHARGE_SPEED);
             if (exhausted && Battery01 >= RESTART_LEVEL) exhausted = false;
         }
+
+        float targetFog = IsOn ? FOG_END_ON : FOG_END_OFF;
+        fogEnd = Mathf.Lerp(fogEnd, targetFog, Time.deltaTime * FOG_BLEND_SPEED);
+        RenderSettings.fogEndDistance = fogEnd;
 
         beam.enabled = IsOn;
     }

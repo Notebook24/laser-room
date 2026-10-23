@@ -18,7 +18,7 @@ public class StealthHazard : MonoBehaviour
     // =====================================================================
     //  EDIT THESE NUMBERS (constants, always win over the Inspector)
     // =====================================================================
-    const float HEAR_RADIUS = 6f;             // meters
+    const float HEAR_RADIUS = 9f;              // meters
     const float HEAR_MIN_SPEED = 1f;          // player must move faster than this to make noise
     const float HEAR_GAIN = 0.5f;             // awareness per second from noise
     const float SIGHT_GAIN = 2.5f;            // awareness per second from sight (x2 when very close)
@@ -30,13 +30,13 @@ public class StealthHazard : MonoBehaviour
     const float CHASE_TURN_SPEED = 360f;
     const float BOX_HALF_HEIGHT = 3f;         // vertical size of the vision broad-phase box
 
-    const float ATTACK_RANGE = 2.5f;          // CheckSphere radius: inside this the guard attacks
+    const float ATTACK_RANGE = 3f;          // CheckSphere radius: inside this the guard attacks
     const int   ATTACK_DAMAGE = 8;
     const float ATTACK_COOLDOWN = 1f;         // seconds between hits
     const float STOP_DISTANCE = 1.4f;         // chasing guard stops this close to you
     const float LOSE_TIME = 3f;               // seconds without seeing/hearing you before it gives up
 
-    const float CONE_LIGHT_INTENSITY = 150f;  // brightness of the vision cone light
+    const float CONE_LIGHT_INTENSITY = 220f;  // brightness of the vision cone light
     const float EMISSION_BOOST = 2f;          // how much the body glows (makes the green clearly visible)
     // =====================================================================
 
