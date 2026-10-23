@@ -14,13 +14,13 @@ public class LaserSpawner : MonoBehaviour
     //  EDIT THESE NUMBERS. They are constants, so they ALWAYS win:
     //  Unity does not save them in the scene and they don't show in the Inspector.
     // =====================================================================
-    const float RED_SPEED = 45f;
+    const float RED_SPEED = 15f;
     const int   RED_DAMAGE = 5;
-    const float BLUE_SPEED = 60f;
+    const float BLUE_SPEED = 20f;
     const int   BLUE_DAMAGE = 10;
 
-    const float SPAWN_INTERVAL = 2f;          // seconds between waves
-    const float BLUE_CHANCE = 0.4f;           // 0 to 1, chance a laser is blue
+    const float SPAWN_INTERVAL = 10f;          // seconds between waves
+    const float BLUE_CHANCE = 0.2f;           // 0 to 1, chance a laser is blue
     const float SIMULTANEOUS_CHANCE = 0.35f;  // 0 to 1, chance of an extra laser in the same wave
     const int   MAX_LASERS_PER_WAVE = 3;
 

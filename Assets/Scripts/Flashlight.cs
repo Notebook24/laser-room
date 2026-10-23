@@ -11,12 +11,12 @@ public class Flashlight : MonoBehaviour
     //  EDIT THESE NUMBERS (constants, always win over the Inspector)
     // =====================================================================
     
-    const float FOG_END_OFF = 16f;         // you can see this far with the light OFF
-    const float FOG_END_ON = 26f;          // you can see this far with the light ON
-    const float FOG_START = 3f;            // fog begins right at the camera
+    const float FOG_END_OFF = 24f;         // you can see this far with the light OFF
+    const float FOG_END_ON = 35f;          // you can see this far with the light ON
+    const float FOG_START = 6f;            // fog begins right at the camera
     const float FOG_BLEND_SPEED = 4f;      // how quickly the view distance changes
-    const float DARK_AMBIENT = 0.25f;      // ambient light (0 = pitch black)
-    const float DARK_SUN = 0.2f;           // directional light intensity (the "moon")
+    const float DARK_AMBIENT = 0.5f;       // ambient light (0 = pitch black)
+    const float DARK_SUN = 0.4f;           // directional light intensity (the "moon")
     const float RANGE = 20f;              // how far the beam reaches (meters)
     const float SPOT_ANGLE = 60f;         // full cone angle (degrees)
     const float INTENSITY = 160f;         // brightness of the visible light (URP spot lights need big numbers)
@@ -34,6 +34,12 @@ public class Flashlight : MonoBehaviour
     float battery;
     bool exhausted;
     float fogEnd = FOG_END_OFF;
+    PlayerController player;
+    int lastRespawn;
+    float damageFlash;   // 1 = full red border, fades to 0
+
+    // Call this to flash a red border around the screen
+    public void DamageFlash() { damageFlash = 1f; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() { Instance = null; }
@@ -49,6 +55,9 @@ public class Flashlight : MonoBehaviour
         Camera c = GetComponentInChildren<Camera>();
         if (c == null) c = Camera.main;
         cam = c.transform;
+
+        player = FindFirstObjectByType<PlayerController>();
+        if (player != null) lastRespawn = player.RespawnCount;
 
         GameObject go = new GameObject("FlashlightBeam");
         go.transform.SetParent(cam, false);
@@ -86,6 +95,17 @@ public class Flashlight : MonoBehaviour
 
     void Update()
     {
+        damageFlash = Mathf.MoveTowards(damageFlash, 0f, Time.deltaTime / 0.9f);
+
+        // Player died and respawned -> full battery, flashlight off
+        if (player != null && player.RespawnCount != lastRespawn)
+        {
+            lastRespawn = player.RespawnCount;
+            battery = BATTERY_SECONDS;
+            exhausted = false;
+            IsOn = false;
+        }
+
         Keyboard kb = Keyboard.current;
         if (kb == null || cam == null) return;
 
@@ -142,6 +162,8 @@ public class Flashlight : MonoBehaviour
     // ------------------------------------------------------------------ HUD
     void OnGUI()
     {
+        DrawDamageBorder();
+
         int fontSize = Mathf.Max(16, Screen.height / 35);
         GUIStyle label = new GUIStyle(GUI.skin.label) { fontSize = fontSize, fontStyle = FontStyle.Bold };
         GUIStyle center = new GUIStyle(label) { alignment = TextAnchor.MiddleCenter };
@@ -166,13 +188,25 @@ public class Flashlight : MonoBehaviour
         GUI.Label(new Rect(20, y, 600, fontSize * 1.5f), $"[F] Flashlight: {state}", label);
         DrawBar(new Rect(20, y + fontSize * 1.5f, barW * 0.6f, barH), Battery01,
                 Battery01 < 0.25f ? Color.red : new Color(1f, 0.9f, 0.4f));
+    }
 
-        // Hidden clues found, top right
-        if (HiddenObject.Total > 0)
+    void DrawDamageBorder()
+    {
+        if (damageFlash <= 0f) return;
+
+        const int layers = 14;
+        float thick = Mathf.Min(Screen.width, Screen.height) * 0.14f;
+        float alpha = 0.07f * damageFlash;
+        GUI.color = new Color(1f, 0f, 0f, alpha);
+        for (int i = 0; i < layers; i++)
         {
-            GUIStyle right = new GUIStyle(label) { alignment = TextAnchor.UpperRight };
-            GUI.Label(new Rect(Screen.width - 520, 20, 500, fontSize * 2), $"Clues: {HiddenObject.Found} / {HiddenObject.Total}", right);
+            float w = thick * (layers - i) / layers;
+            GUI.DrawTexture(new Rect(0, 0, Screen.width, w), Texture2D.whiteTexture);                       // top
+            GUI.DrawTexture(new Rect(0, Screen.height - w, Screen.width, w), Texture2D.whiteTexture);       // bottom
+            GUI.DrawTexture(new Rect(0, 0, w, Screen.height), Texture2D.whiteTexture);                      // left
+            GUI.DrawTexture(new Rect(Screen.width - w, 0, w, Screen.height), Texture2D.whiteTexture);       // right
         }
+        GUI.color = Color.white;
     }
 
     static void DrawBar(Rect r, float fill, Color color)

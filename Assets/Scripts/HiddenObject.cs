@@ -40,7 +40,6 @@ public class HiddenObject : MonoBehaviour
 
     float visibleUntil;
     bool visible;
-    bool discovered;
     bool collected;
     int collectedAtRespawn;
 
@@ -79,7 +78,6 @@ public class HiddenObject : MonoBehaviour
             if (comesBackAfterDeath && player.RespawnCount != collectedAtRespawn)
             {
                 collected = false;
-                discovered = false;
                 Found--;
             }
             return;
@@ -92,14 +90,8 @@ public class HiddenObject : MonoBehaviour
         bool nowVisible = Time.time < visibleUntil;
         if (nowVisible != visible) SetVisible(nowVisible);
 
-        if (visible && !discovered)
-        {
-            discovered = true;
-            if (health != null) health.ShowMessage("Hidden object detected!", 1.5f);
-        }
-
-        // Only collectable while it is revealed
-        if (isClue && visible)
+        // Collectable even while hidden (no flashlight needed)
+        if (isClue)
         {
             Bounds grab = bounds;
             grab.Expand(0.6f);
@@ -114,6 +106,9 @@ public class HiddenObject : MonoBehaviour
         collectedAtRespawn = player.RespawnCount;
         Found++;
         SetVisible(false);
+
+        // Red border flash around the screen
+        if (flashlight != null) flashlight.DamageFlash();
 
         string msg = "You stepped on a trap!";
         bool loseHealth = false;
