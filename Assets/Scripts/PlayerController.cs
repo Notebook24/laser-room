@@ -23,10 +23,18 @@ public class PlayerController : MonoBehaviour
     Vector3 startPosition;
     Quaternion startRotation;
 
+    // Debuffs
+    float slowUntil;
+    float slowFactor = 1f;
+    float noJumpUntil;
+
     public float CurrentJumpSpeed { get; private set; }
     public int RespawnCount { get; private set; }
     public float CurrentMoveSpeed { get; private set; }
     public CharacterController Controller => controller;
+
+    public bool JumpDisabled => Time.time < noJumpUntil;
+    public bool IsSlowed => Time.time < slowUntil;
 
     void Awake()
     {
@@ -97,8 +105,10 @@ public class PlayerController : MonoBehaviour
             if (kb.aKey.isPressed) input.x -= 1f;
         }
 
+        // Slow debuff is applied on top of CurrentMoveSpeed so speed pickups still work
+        float speedMult = IsSlowed ? slowFactor : 1f;
         Vector3 move = transform.right * input.x + transform.forward * input.y;
-        move = Vector3.ClampMagnitude(move, 1f) * CurrentMoveSpeed;
+        move = Vector3.ClampMagnitude(move, 1f) * CurrentMoveSpeed * speedMult;
 
         // Jump and gravity.
         // We track "grounded" from our own Move call. controller.isGrounded gets overwritten by
@@ -107,7 +117,7 @@ public class PlayerController : MonoBehaviour
 
         if (grounded && verticalVelocity < 0f)
             verticalVelocity = -2f;
-        if (canMove && canJump && kb.spaceKey.wasPressedThisFrame)
+        if (canMove && canJump && !JumpDisabled && kb.spaceKey.wasPressedThisFrame)
         {
             verticalVelocity = CurrentJumpSpeed;
             lastGroundedTime = -10f;   // no double jump during the grace period
@@ -140,6 +150,18 @@ public class PlayerController : MonoBehaviour
         CurrentJumpSpeed += bonus;   // adds on top of the current jump speed
     }
 
+    // Debuffs ---------------------------------------------------------
+    public void ApplySlow(float factor, float seconds)
+    {
+        slowFactor = factor;
+        slowUntil = Time.time + seconds;
+    }
+
+    public void DisableJump(float seconds)
+    {
+        noJumpUntil = Time.time + seconds;
+    }
+
     public void Respawn()
     {
         RespawnCount++;
@@ -151,5 +173,9 @@ public class PlayerController : MonoBehaviour
         cam.localRotation = Quaternion.identity;
         CurrentJumpSpeed = baseJumpSpeed;
         CurrentMoveSpeed = moveSpeed;
+
+        // Clear debuffs on death
+        slowUntil = 0f;
+        noJumpUntil = 0f;
     }
 }
